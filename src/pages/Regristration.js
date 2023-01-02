@@ -9,7 +9,8 @@ import { styled } from "@mui/material/styles";
 import Button from "@mui/material/Button";
 import AuthenticationLink from "../components/AuthenticationLink";
 import Alert from "@mui/material/Alert";
-import {AiFillEye} from "react-icons/ai"
+import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
+import { getAuth, createUserWithEmailAndPassword, sendEmailVerification  } from "firebase/auth";
 
 const commonButton = styled(Button)({
   width: "100%",
@@ -27,6 +28,8 @@ const commonButton = styled(Button)({
 });
 
 const Regristration = () => {
+  const auth = getAuth();
+
   let [formData, setFormData] = useState({
     email: "",
     fullname: "",
@@ -52,8 +55,24 @@ const Regristration = () => {
       setError({ ...error, fullname: "Fullname Required" });
     } else if (formData.password == "") {
       setError({ ...error, password: "Password Required" });
+    } else {
+      createUserWithEmailAndPassword(auth, formData.email, formData.password)
+        .then((user) => {sendEmailVerification(auth.currentUser)
+          .then(() => {
+            console.log("Email send")
+          });
+        })
+        .catch((error) => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          if(errorCode.includes("auth/email-already-in-use")){
+            setError({...error, email: "Email Already Exists"})
+          }
+        });
     }
   };
+
+  let [show, setShow] = useState(false);
 
   return (
     <>
@@ -103,16 +122,27 @@ const Regristration = () => {
                   </Alert>
                 )}
 
-                <InputBox
-                  className="reginput"
-                  label="Password"
-                  variant="outlined"
-                  textChange={handelForm}
-                  type="password"
-                  name="password"
-                />
-
-                <AiFillEye className="reginput"/>
+                <div style={{ width: "100%", position: "relative" }}>
+                  <InputBox
+                    className="reginput"
+                    label="Password"
+                    variant="outlined"
+                    textChange={handelForm}
+                    type={show ? "text" : "password"}
+                    name="password"
+                  />
+                  {show ? (
+                    <AiFillEye
+                      onClick={() => setShow(false)}
+                      className="eyeicon"
+                    />
+                  ) : (
+                    <AiFillEyeInvisible
+                      onClick={() => setShow(true)}
+                      className="eyeicon"
+                    />
+                  )}
+                </div>
 
                 {error.password && (
                   <Alert className="error" variant="filled" severity="error">
@@ -137,4 +167,11 @@ const Regristration = () => {
           </div>
         </Grid>
         <Grid item xs={6}>
-          <Images className="regimg" imgsrc="assets/
+          <Images className="regimg" imgsrc="assets/regimg.png" />
+        </Grid>
+      </Grid>
+    </>
+  );
+};
+
+export default Regristration;
