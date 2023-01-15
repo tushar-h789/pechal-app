@@ -6,12 +6,14 @@ import {
   Route,
 } from "react-router-dom";
 import Login from "./pages/Login";
+import Home from "./pages/Home";
 
 let router = createBrowserRouter(
   createRoutesFromElements(
     <Route>
       <Route path="/" element={<Regristration />}></Route>
       <Route path="/login" element={<Login />}></Route>
+      <Route path="/home" element={<Home />}></Route>
     </Route>
   ) 
 );

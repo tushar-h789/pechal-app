@@ -10,7 +10,15 @@ import Button from "@mui/material/Button";
 import AuthenticationLink from "../components/AuthenticationLink";
 import Alert from "@mui/material/Alert";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
-import { getAuth, createUserWithEmailAndPassword, sendEmailVerification  } from "firebase/auth";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+} from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { Dna } from "react-loader-spinner";
 
 const commonButton = styled(Button)({
   width: "100%",
@@ -29,6 +37,7 @@ const commonButton = styled(Button)({
 
 const Regristration = () => {
   const auth = getAuth();
+  let navigate = useNavigate();
 
   let [formData, setFormData] = useState({
     email: "",
@@ -36,37 +45,72 @@ const Regristration = () => {
     password: "",
   });
 
+  let [loader, setLoader] = useState(false);
+
   let [error, setError] = useState({
     email: "",
     fullname: "",
     password: "",
   });
 
-  let handelForm = (e) => {
+  let handleForm = (e) => {
     let { name, value } = e.target;
+
+    if (name === "password") {
+      let capi = /[A-Z]/;
+      let lower = /[a-z]/;
+      let num = /[0-9]/;
+      if (!capi.test(value)) {
+        setError({ ...error, password: "One Capital Letter Required" });
+        return;
+      }
+      if (!lower.test(value)) {
+        setError({ ...error, password: "One Small Letter Required" });
+        return;
+      }
+      if (!num.test(value)) {
+        setError({ ...error, password: "One Number Required" });
+        return;
+      }
+      if (value.length < 6) {
+        setError({ ...error, password: "Password length atlest 6" });
+        return;
+      }
+    }
+
     setFormData({ ...formData, [name]: value });
     setError({ ...error, [name]: "" });
   };
 
   let handelClick = () => {
-    if (formData.email == "") {
-      setError({ ...error, email: "Email Rewuired" });
-    } else if (formData.fullname == "") {
+    setLoader(true);
+    let expression =
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+    if (formData.email === "") {
+      setError({ ...error, email: "Email Required" });
+    } else if (!expression.test(formData.email)) {
+      setError({ ...error, email: "Valid Email Required" });
+    } else if (formData.fullname === "") {
       setError({ ...error, fullname: "Fullname Required" });
-    } else if (formData.password == "") {
+    } else if (formData.password === "") {
       setError({ ...error, password: "Password Required" });
     } else {
       createUserWithEmailAndPassword(auth, formData.email, formData.password)
-        .then((user) => {sendEmailVerification(auth.currentUser)
-          .then(() => {
-            console.log("Email send")
+        .then((user) => {
+          sendEmailVerification(auth.currentUser).then(() => {
+            setLoader(false);
+            toast("Regrestration Successful. Please Check Your Email");
+            setTimeout(() => {
+              navigate("/login");
+            }, 2000);
           });
         })
         .catch((error) => {
           const errorCode = error.code;
           const errorMessage = error.message;
-          if(errorCode.includes("auth/email-already-in-use")){
-            setError({...error, email: "Email Already Exists"})
+          if (errorCode.includes("auth/email-already-in-use")) {
+            setError({ ...error, email: "Email Already Exists" });
           }
         });
     }
@@ -78,6 +122,18 @@ const Regristration = () => {
     <>
       {/* this is email validation */}
       <Grid container spacing={2}>
+        <ToastContainer
+          position="top-left"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="dark"
+        />
         <Grid item xs={6}>
           <div className="regleftside">
             <div>
@@ -96,7 +152,7 @@ const Regristration = () => {
                   className="reginput"
                   label="Email Address"
                   variant="outlined"
-                  textChange={handelForm}
+                  textChange={handleForm}
                   type="email"
                   name="email"
                 />
@@ -111,7 +167,7 @@ const Regristration = () => {
                   className="reginput"
                   label="Ful name"
                   variant="outlined"
-                  textChange={handelForm}
+                  textChange={handleForm}
                   type="text"
                   name="fullname"
                 />
@@ -127,7 +183,7 @@ const Regristration = () => {
                     className="reginput"
                     label="Password"
                     variant="outlined"
-                    textChange={handelForm}
+                    textChange={handleForm}
                     type={show ? "text" : "password"}
                     name="password"
                   />
@@ -150,11 +206,22 @@ const Regristration = () => {
                   </Alert>
                 )}
 
-                <PButton
-                  click={handelClick}
-                  bname={commonButton}
-                  title="Sign up"
-                />
+                {loader ? (
+                  <Dna
+                    visible={true}
+                    height="80"
+                    width="80"
+                    ariaLabel="dna-loading"
+                    wrapperStyle={{}}
+                    wrapperClass="dna-wrapper"
+                  />
+                ) : (
+                  <PButton
+                    click={handelClick}
+                    bname={commonButton}
+                    title="Sign up"
+                  />
+                )}
 
                 <AuthenticationLink
                   className="reglink"
