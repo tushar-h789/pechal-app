@@ -10,7 +10,7 @@ import Button, { ButtonProps } from "@mui/material/Button";
 import AuthenticationLink from "../components/AuthenticationLink";
 import Alert from "@mui/material/Alert";
 import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -33,6 +33,7 @@ const commonButton = styled(Button)({
 const Login = () => {
   let auth = getAuth();
   let navigate = useNavigate();
+  const provider = new GoogleAuthProvider();
 
   let [formData, setFormData] = useState({
     email: "",
@@ -45,10 +46,6 @@ const Login = () => {
     email: "",
     password: "",
   });
-
-  let handleClick = () => {
-    
-  };
 
   let handleForm = (e) => {
     let { name, value } = e.target;
@@ -95,7 +92,12 @@ const Login = () => {
     }else{
       signInWithEmailAndPassword(auth, formData.email, formData.password)
     .then((userCredential) => {
-      console.log("kaj hoiche");
+      console.log(userCredential.user.emailVerified)
+      if(userCredential.user.emailVerified){
+        navigate("/home")
+      }else{
+        toast("Please Verify your email first and try again");
+      }
       setLoader(false);
       toast("Login Successful");
       setTimeout(() => {
@@ -117,6 +119,14 @@ const Login = () => {
   };
 
   let [show, setShow] = useState(false);
+
+  let handleGoogle = ()=>{
+    signInWithPopup(auth, provider)
+  .then((result) => {
+    console.log("google done")
+  });
+
+  }
 
   return (
     <>
@@ -143,8 +153,8 @@ const Login = () => {
                   as="h2"
                 />
               </Header>
-              <div className="googlelogin">
-                <Images imgsrc="assets/googlelogin.png" />
+              <div onClick={handleGoogle} className="googlelogin">
+                <Images  imgsrc="assets/googlelogin.png" />
               </div>
               <div className="inputboxcontainer">
                 <InputBox

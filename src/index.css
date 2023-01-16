@@ -53,6 +53,7 @@
 }
 .googlelogin{
   margin-top:29.78px;
+  cursor: pointer;
 }
 .regrightside{
   display: flex;
